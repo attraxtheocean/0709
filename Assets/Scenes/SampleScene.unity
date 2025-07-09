@@ -2228,7 +2228,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   coin: 0
-  textMeshProCoin: {fileID: 0}
+  textMeshProCoin: {fileID: 1247003090}
 --- !u!4 &2046051337
 Transform:
   m_ObjectHideFlags: 0
