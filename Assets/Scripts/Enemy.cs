@@ -66,27 +66,31 @@ public class Enemy : MonoBehaviour
 
     // 미사일과 충돌 시 처리
     private void OnTriggerEnter2D(Collider2D collision)
+{
+    if (collision.CompareTag("Missile"))
     {
-        if (collision.tag == "Missile")
+        Missile missile = collision.GetComponent<Missile>();
+
+        StopAllCoroutines(); // 기존 코루틴 정지
+        StartCoroutine(HitColor()); // 피격 색상 코루틴 실행
+
+        // 체력 감소
+        enemyHp -= missile.missileDamage;
+
+        if (enemyHp <= 0f)
         {
-            Missile missile = collision.GetComponent<Missile>();
-
-            StopAllCoroutines(); // 기존 코루틴 정지
-            StartCoroutine(HitColor()); // 피격 색상 코루틴 실행
-
-            // 체력 감소
-            enemyHp -= missile.missileDamage;
-
-            if (enemyHp <= 0f)
-            {
-                Destroy(gameObject); // 적 삭제
-                Instantiate(Coin, transform.position, Quaternion.identity);     // 코인 생성
-                Instantiate(Effect, transform.position, Quaternion.identity);   // 이펙트 생성
-            }
-
-            TakeDamage(missile.missileDamage); // 데미지 팝업 표시
+            Destroy(gameObject); // 적 삭제
+            Instantiate(Coin, transform.position, Quaternion.identity);     // 코인 생성
+            Instantiate(Effect, transform.position, Quaternion.identity);   // 이펙트 생성
         }
+
+        TakeDamage(missile.missileDamage); // 데미지 팝업 표시
     }
+    else if (collision.CompareTag("Player")) // 추가된 부분
+    {
+        GameManager.Instance.OnPlayerHitByEnemy(); // 게임 종료 호출
+    }
+}
 
     // 피격 시 색상 변경 코루틴
     IEnumerator HitColor()

@@ -4,82 +4,98 @@ using UnityEngine;
 
 public class Player : MonoBehaviour
 {
-    // 플레이어 이동 속도
-    [SerializeField]
-    float moveSpeed = 1f;
-
-    // 현재 미사일 프리팹 인덱스
+    [SerializeField] float moveSpeed = 1f;
     int missIndex = 0;
 
-    // 미사일 프리팹 배열
-    public GameObject[] missilePrefab;
+    public GameObject[] missilePrefab; // 미사일 종류들
+    public Transform spPostion;        // 미사일 발사 위치
 
-    // 미사일 생성 위치
-    public Transform spPostion;
-
-    // 미사일 발사 간격(초)
-    [SerializeField]
-    private float shootInterval = 0.05f;
-
-    // 마지막 발사 시간
+    [SerializeField] private float shootInterval = 0.05f;
     private float lastshotTime = 0f;
 
-    // 애니메이터 컴포넌트 참조
     private Animator animator;
 
     void Start()
     {
-        animator = GetComponent<Animator>(); // Animator 컴포넌트 가져오기
+        animator = GetComponent<Animator>();
     }
 
-    // 매 프레임마다 이동 및 발사 처리
     void Update()
     {
+        // ✅ 게임이 종료되었으면 조작 금지
+        if (GameManager.Instance != null && GameManager.Instance.isGameOver)
+        {
+            animator.enabled = false; // 애니메이션 자체 끔
+            return;
+        }
+
+        // 이동 처리
         float horizontalInput = Input.GetAxisRaw("Horizontal");
         Vector3 move = new Vector3(horizontalInput, 0, 0);
-        transform.position += move * moveSpeed * Time.deltaTime; // 좌우 이동
+        transform.position += move * moveSpeed * Time.deltaTime;
 
-        // 애니메이션 상태 변경
+        // 애니메이션 처리
         if (horizontalInput < 0)
         {
-            animator.Play("Left"); // 왼쪽 이동 애니메이션
+            animator.Play("Left");
         }
         else if (horizontalInput > 0)
         {
-            animator.Play("Right"); // 오른쪽 이동 애니메이션
+            animator.Play("Right");
         }
         else
         {
-            animator.Play("Idle"); // 가만히(정지) 애니메이션
+            animator.Play("Idle");
         }
 
-        Shoot(); // 미사일 발사
+        // 자동 발사
+        Shoot();
+
+        // Z키를 누르면 3발 발사
+        if (Input.GetKeyDown(KeyCode.Z))
+        {
+            FireTripleMissile();
+        }
     }
 
-    // 미사일 발사 함수
     void Shoot()
     {
         if (Time.time - lastshotTime > shootInterval)
         {
             Instantiate(missilePrefab[missIndex], spPostion.position, Quaternion.identity);
-            lastshotTime = Time.time; // 마지막 발사 시간 갱신
+            lastshotTime = Time.time;
         }
     }
 
-    // 미사일 업그레이드 함수
+    void FireTripleMissile()
+    {
+        Vector3 centerPos = spPostion.position;
+
+        // 가운데 미사일
+        Instantiate(missilePrefab[missIndex], centerPos, Quaternion.identity);
+
+        // 왼쪽
+        Vector3 leftPos = centerPos + new Vector3(-0.5f, 0f, 0f);
+        Instantiate(missilePrefab[missIndex], leftPos, Quaternion.Euler(0, 0, 15));
+
+        // 오른쪽
+        Vector3 rightPos = centerPos + new Vector3(0.5f, 0f, 0f);
+        Instantiate(missilePrefab[missIndex], rightPos, Quaternion.Euler(0, 0, -15));
+    }
+
     public void MissileUp()
     {
-        missIndex++; // 미사일 종류 업그레이드
-        shootInterval = shootInterval - 0.1f; // 발사 간격 감소(더 빠르게)
+        missIndex++;
+        shootInterval -= 0.1f;
 
         if (shootInterval <= 0.1f)
         {
-            shootInterval = 0.1f; // 최소 발사 간격 제한
+            shootInterval = 0.1f;
         }
 
         if (missIndex >= missilePrefab.Length)
         {
-            missIndex = missilePrefab.Length - 1; // 인덱스 범위 제한
+            missIndex = missilePrefab.Length - 1;
         }
     }
 }
